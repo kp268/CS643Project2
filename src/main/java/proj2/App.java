@@ -33,7 +33,7 @@ public class App {
 
 
     public void connect(){
-        appSession.setSparkSession("spark://127.0.0.1:7077");
+        appSession.setSparkSession("spark://BLD-L:7077");
 
     }
 
@@ -41,20 +41,9 @@ public class App {
 
         LogisticRegression logisticRegression = new LogisticRegression()
                 .setFeaturesCol("features")
-                .setRegParam(0.05)
-                .setMaxIter(10000)
+                .setRegParam(0.2)
+                .setMaxIter(15)
                 .setLabelCol("quality");
-
-        LogisticRegressionModel logModel = logisticRegression.fit(result);
-
-        logModel.setThreshold(0.2);
-
-        Dataset<Row> winePrediction = logModel.transform(validate).select("features", "quality", "prediction");
-
-        winePrediction.show();
-
-        LogisticRegressionModel logisticRegressionModel = logisticRegression.fit(result);
-        logisticRegressionTrainingSummary = logisticRegressionModel.summary();
 
         wineData = appSession.sparkSession.read()
                 .option("inferSchema", true)
@@ -73,11 +62,26 @@ public class App {
                 .setOutputCol("features");
 
 
+        result = vectorAssembler.transform(wineData).select("quality", "features");
+        result.show();
+
+        LogisticRegressionModel logModel = logisticRegression.fit(result);
+
+        logModel.setThreshold(0.2);
+        validate = vectorAssembler.transform(validationData).select("quality", "features");
+
+        Dataset<Row> winePrediction = logModel.transform(validate).select("features", "quality", "prediction");
+
+        winePrediction.show();
+
+        LogisticRegressionModel logisticRegressionModel = logisticRegression.fit(result);
+        logisticRegressionTrainingSummary = logisticRegressionModel.summary();
+
+
+
     }
 
     public void result(){
-        result = vectorAssembler.transform(wineData).select("quality", "features");
-        validate = vectorAssembler.transform(validationData).select("quality", "features");
 
         System.out.println("F Score:" + logisticRegressionTrainingSummary.labelCol().toString());
         System.out.print(Arrays.toString(logisticRegressionTrainingSummary.fMeasureByLabel())+ "\n");
