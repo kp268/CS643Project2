@@ -33,7 +33,7 @@ public class App {
 
 
     public void connect(){
-        appSession.setSparkSession("spark://BLD-L:7077");
+        appSession.setSparkSession("spark://127.0.0.1:7077");
 
     }
 
